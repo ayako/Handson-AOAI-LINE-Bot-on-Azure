@@ -1,3 +1,7 @@
+## dev tools
+.vs
+.vscode
+
 ## Node.js
 # Logs
 logs
