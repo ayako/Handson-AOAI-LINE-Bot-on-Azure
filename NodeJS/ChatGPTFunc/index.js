@@ -1,33 +1,46 @@
-const lineapi_url = 'https://api.line.me/v2/bot/message/reply';
-const lineapi_token = 'YOUR_LINEAPI_TOKEN';
-const aoai_url = 'https://YOUR_AOAI_SERVICE.openai.azure.com/openai/deployments/gtp-35-turbo_202203/chat/completions?api-version=2023-03-15-preview';
+const aoai_url = 'https://YOUR_AOAI_SERVICE.openai.azure.com/openai/deployments/YOUR_gtp-35-turbo_NAME/chat/completions?api-version=2023-03-15-preview';
 const aoai_key = 'YOUR_AOAI_KEY';
+const lineapi_url = 'https://api.line.me/v2/bot/message/reply';
+const lineapi_token = 'YOUR_LINE_API_TOKEN';
+
+const util = require('util');
+const request = require('request');
+const requestPromise = util.promisify(request);
 
 module.exports = async function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
+    var responseMsg = '';
 
-    if (req.body && req.body[0].type == 'message' ){
-        const user_question = req.body[0].message.text;
-        // const aoai_answer = postToAOAI(user_question);
-        // replyToUser(aoai_answer, req.body[0].replyToken);
-    
-        context.res = {
-            status: 200, /* Defaults to 200 */
-            // body: 'activity completed successfully.'
-            body: 'user_question is: ' + user_question
-        };    
-    }
-    else
-    {
-        context.res = {
-            status: 200, /* Defaults to 200 */
-            body: 'did nothing.'
+    if (req.body){
+        if (req.body.events.length > 0 && req.body.events[0].type == 'message'){
+            const question = req.body.events[0].message.text;
+            const aoai_answer = await postToAOAI(question);
+            const lineapi_result = await replyToUser(aoai_answer, req.body.events[0].replyToken);
+
+            if (lineapi_result){
+              responseMsg = 'sent answer to LINE API successfully.'
+            }
+            else{
+              responseMsg = 'got error to POST to LINE API.'
+            }
         }
+        else{
+            responseMsg = 'got request body (not message).';
+        }
+    }    
+    else{
+        responseMsg = 'got access.';
     }
+
+    context.res = {
+      status: 200, /* Defaults to 200 */
+      body: responseMsg
+    }
+
 }
 
-function postToAOAI(req_message) {
-    const req_body = {
+async function postToAOAI(question) {
+    var req_body = {
       "messages": [
         {
           "role": "system",
@@ -35,7 +48,7 @@ function postToAOAI(req_message) {
         },
         {
           "role": "user",
-          "content": req_message
+          "content": question
         },
         {
           "role": "assistant",
@@ -49,29 +62,25 @@ function postToAOAI(req_message) {
       "max_tokens": 800,
       "stop": null
     }
-  
-    fetch(aoai_url,{
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': aoai_key
-      },
-      body: JSON.stringify(req_body)
-    })
-    .then((res) => res.json())
-    .then((json) => { 
-      // 取得内容を表示
-      console.log(json);
-      return json.choices[0].message.content;
-    })
-    .catch((error) => {
+
+    try{
+      var response = await requestPromise(
+        {
+          method:'post',
+          url: aoai_url,
+          headers: { 'Content-Type': 'application/json', 'api-key': aoai_key },
+          body: JSON.stringify(req_body)
+        });
+      return JSON.parse(response.body).choices[0].message.content;
+    }
+    catch(error){
       console.error('AOAI Post Error:', error.code + ': ' + error.message)
       return null;
-    })
+    }
 }
 
-function replyToUser(answer,reply_token){
-    const req_body = {
+async function replyToUser(answer,reply_token){
+    var req_body = {
         "messages": [
           {
             "text": answer,
@@ -80,17 +89,19 @@ function replyToUser(answer,reply_token){
         ],
         "replyToken": reply_token
       }
-
-    fetch(lineapi_url,{
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + lineapi_token
-        },
-        body: JSON.stringify(req_body)
-    })
-    .catch((error) => {
-        console.error('LINE Api Post Error:', error.code + ': ' + error.message)
-        return null;
-    })
+    
+    try{
+      var response = await requestPromise(
+        {
+          method:'post',
+          url: lineapi_url,
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + lineapi_token },
+          body: JSON.stringify(req_body)
+        });
+      return true;
+    }
+    catch(error){
+      console.error('LINE Api Post Error:', error.code + ': ' + error.message)
+      return false;
+    }
 }
