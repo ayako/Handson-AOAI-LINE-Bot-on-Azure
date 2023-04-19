@@ -1,5 +1,6 @@
 ﻿namespace ChatGPTFunc_CSharp
 {
+    #pragma warning disable IDE1006
     public class LINEApiRequest
     {
         public string destination { get; set; }
@@ -41,5 +42,5 @@
     {
         public bool isRedelivery { get; set; }
     }
-
+    #pragma warning restore
 }
