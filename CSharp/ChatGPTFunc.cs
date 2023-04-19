@@ -14,15 +14,15 @@ using System.Text;
 using System.Text.Json;
 
 namespace ChatGPTFunc_CSharp
-{    
+{
     public static class ChatGPTFunc
     {
-        private static string aoaiUrl = "https://YOUR_AOAI_SERVICE.openai.azure.com/";
-        private static string aoaiKey = "YOUR_AOAI_KEY";
-        private static string aoaiModelName = "YOUR_gtp-35-turbo_NAME";
-        private static string lineApiToken = "YOUR_LINE_API_TOKEN";
+        private static readonly string aoaiUrl = "https://YOUR_AOAI_SERVICE.openai.azure.com/";
+        private static readonly string aoaiKey = "YOUR_AOAI_KEY";
+        private static readonly string aoaiModelName = "YOUR_gtp-35-turbo_NAME";
+        private static readonly string lineApiToken = "YOUR_LINE_API_TOKEN";
 
-        private static HttpClient _client;
+        private static readonly HttpClient _client;
         static ChatGPTFunc()
         {
             _client = new HttpClient();
@@ -38,22 +38,22 @@ namespace ChatGPTFunc_CSharp
             log.LogInformation("C# HTTP trigger function processed a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            string responseMessage = string.Empty;
+            string responseMessage;
 
             if (!string.IsNullOrEmpty(requestBody))
             {
                 LINEApiRequest lineApiRequest = JsonSerializer.Deserialize<LINEApiRequest>(requestBody);
-                if (lineApiRequest != null && lineApiRequest.events.Length > 0 &&lineApiRequest.events[0].type == "message")
+                if (lineApiRequest != null && lineApiRequest.events.Length > 0 && lineApiRequest.events[0].type == "message")
                 {
-                    
+
                     // send question to AOAI and get answer
-                    
+
                     string question = lineApiRequest.events[0].message.text;
 
-                    OpenAIClient aoaiClient = new OpenAIClient(new Uri(aoaiUrl), new AzureKeyCredential(aoaiKey));
+                    var aoaiClient = new OpenAIClient(new Uri(aoaiUrl), new AzureKeyCredential(aoaiKey));
                     Response<ChatCompletions> aoaiResponse = await aoaiClient.GetChatCompletionsAsync(
                         aoaiModelName,
-                        new ChatCompletionsOptions() 
+                        new ChatCompletionsOptions()
                         {
                             Messages =
                             {
@@ -71,10 +71,10 @@ namespace ChatGPTFunc_CSharp
                     ChatCompletions aoaiCompletions = aoaiResponse.Value;
                     string aoaiAnswer = aoaiCompletions.Choices[0].Message.Content;
 
-                    
+
                     // Send respone to user via LINE Messaging API
-                    
-                    LINEApiPostContent lineApiPostContent = new LINEApiPostContent()
+
+                    var lineApiPostContent = new LINEApiPostContent()
                     {
                         replyToken = lineApiRequest.events[0].replyToken,
                         messages = new Message[]
@@ -87,7 +87,7 @@ namespace ChatGPTFunc_CSharp
                         }
                     };
 
-                    StringContent stringContent = new StringContent(JsonSerializer.Serialize(lineApiPostContent), encoding: Encoding.UTF8, "application/json");
+                    var stringContent = new StringContent(JsonSerializer.Serialize(lineApiPostContent), encoding: Encoding.UTF8, "application/json");
                     HttpResponseMessage lineApiPostResult = await _client.PostAsync("https://api.line.me/v2/bot/message/reply", stringContent);
                     if (lineApiPostResult.StatusCode == HttpStatusCode.OK)
                     {
@@ -95,7 +95,7 @@ namespace ChatGPTFunc_CSharp
                     }
                     else
                     {
-                        responseMessage = "got error to Post to LINE API."; 
+                        responseMessage = "got error to Post to LINE API.";
                     }
 
                 }
@@ -103,7 +103,7 @@ namespace ChatGPTFunc_CSharp
                 {
                     responseMessage = "got request body (not message).";
                 }
-                
+
             }
             else
             {
