@@ -9,13 +9,11 @@ This repo includes:
 
 ### How to use dev environment
 
-FORK this repo into your (GitHub Codespace enabled account) repository. 
+Sign-in with GitHub Codespace enabled account.
+Create Codespace with **[Code]** button > **[Codespaces]** tab > **[Create codespace on main]**
 
-
-Select **Owner** for forking repo, and **[Create fork]** at bottom
-
-
-At your repo, create Codespace with **[Code]** button > **[Codespaces]** tab > **[Create codespace on main]**
-
+![](screenshots/Handson-AOAI-LINEApiBot_03.png)
 
 Wait untill codespace to be ready to show. After all, you can select existing codespace from **[Code]** button > **[Codespaces]** tab at top your repo.
+
+![](screenshots/Handson-AOAI-LINEApiBot_04.png)
