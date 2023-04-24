@@ -17,3 +17,7 @@ Create Codespace with **[Code]** button > **[Codespaces]** tab > **[Create codes
 Wait untill codespace to be ready to show. After all, you can select existing codespace from **[Code]** button > **[Codespaces]** tab at top your repo.
 
 ![](screenshots/Handson-AOAI-LINEApiBot_04.png)
+
+## How to use this sample code (C# | Node.JS | Python)
+
+Update code with your Azure OpenAI Base URL & Key (copy from Azure Portal), deployed model name (copy from Azure OpenAI Studio), and LINE Messaging API channel token (copy from LINE Developer Console). Please refer [「あの」キャラクターを ChatGPT で LINE に召喚してみる](https://qiita.com/annie/items/9333f1c4d2eab9104926) for detail.
